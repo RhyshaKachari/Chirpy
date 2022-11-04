@@ -1,6 +1,6 @@
 # Chirpy
 A simple Chat app where you can connect with your friends and chat with them endlessly. 
-
+Find your friends' username through the search bar and send them a message.
 
 ![img2](https://user-images.githubusercontent.com/99410471/199909965-2b127c20-9c56-4e95-aa06-11af2662ce2c.jpeg)
 
