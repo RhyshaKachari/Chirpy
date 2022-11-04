@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
+import 'chatAndActivityScreen.dart';
+import 'logs_collection.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -16,14 +19,15 @@ class _MainScreenState extends State<MainScreen> {
       length: 3,
       child: WillPopScope(
         onWillPop: () async {
-          if (_currIndex > 0) {
+          if (_currIndex > 0)
             return false;
-          } else {
+          else {
             return true;
           }
         },
         child: Scaffold(
-          backgroundColor: const Color.fromARGB(239, 46, 38, 78),
+          backgroundColor: const Color.fromRGBO(34, 48, 60, 1),
+          drawer: _drawer(),
           appBar: AppBar(
             brightness: Brightness.dark,
             backgroundColor: const Color.fromRGBO(25, 39, 52, 1),
@@ -37,7 +41,7 @@ class _MainScreenState extends State<MainScreen> {
               side: BorderSide(width: 0.7),
             ),
             title: Text(
-              "Chirpy",
+              "Generation",
               style: TextStyle(
                   fontSize: 25.0, fontFamily: 'Lora', letterSpacing: 1.0),
             ),
@@ -65,11 +69,13 @@ class _MainScreenState extends State<MainScreen> {
             ],
             bottom: _bottom(),
           ),
-          body: TabBarView(children: [
-            Center(),
-            Center(),
-            Center(),
-          ]),
+          body: TabBarView(
+            children: [
+              ChatAndActivityScreen(),
+              LogsCollection(),
+              GeneralMessagingSection(),
+            ],
+          ),
         ),
       ),
     );
@@ -103,7 +109,7 @@ class _MainScreenState extends State<MainScreen> {
             "Chats",
             style: TextStyle(
               fontSize: 20.0,
-              fontFamily: "Lora",
+              fontFamily: 'Lora',
               fontWeight: FontWeight.w500,
               letterSpacing: 1.0,
             ),
@@ -127,10 +133,6 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ),
       ],
-    );
-    body:
-    TabBarView(
-      children: [],
     );
   }
 }
