@@ -1,13 +1,23 @@
+import 'package:chirpy/FrontEnd/MainScreens/logs_collection.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:chirpy/Backend/firebase/OnlineDatabaseManagement/cloud_data_management.dart';
+import 'package:chirpy/Backend/sqlite_management/local_database_management.dart';
+import 'package:chirpy/FrontEnd/Services/ChatManagement/chat_screen.dart';
+import 'package:chirpy/FrontEnd/Services/search_screen.dart';
+import 'package:chirpy/Global_Uses/constants.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:chirpy/Global_Uses/enum_generation.dart';
 import 'package:loading_overlay/loading_overlay.dart';
+
 import 'package:animations/animations.dart';
 
 class ChatAndActivityScreen extends StatefulWidget {
-  const ChatAndActivityScreen({super.key});
+  const ChatAndActivityScreen({Key? key}) : super(key: key);
 
   @override
-  State<ChatAndActivityScreen> createState() => _ChatAndActivityScreenState();
+  _ChatAndActivityScreenState createState() => _ChatAndActivityScreenState();
 }
 
 class _ChatAndActivityScreenState extends State<ChatAndActivityScreen> {
@@ -15,11 +25,104 @@ class _ChatAndActivityScreenState extends State<ChatAndActivityScreen> {
   final List<String> _allUserConnectionActivity = ['Chirpy', 'Rhysha'];
   final List<String> _allConnectionsUserName = [];
 
+  final CloudStoreDataManagement _cloudStoreDataManagement =
+      CloudStoreDataManagement();
+
+  final LocalDatabase _localDatabase = LocalDatabase();
+
+  static final FirestoreFieldConstants _firestoreFieldConstants =
+      FirestoreFieldConstants();
+
+  /// For New Connected User Data Entry
+  Future<void> _checkingForNewConnection(
+      QueryDocumentSnapshot<Map<String, dynamic>> queryDocumentSnapshot,
+      List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) async {
+    if (mounted) {
+      setState(() {
+        this._isLoading = true;
+      });
+    }
+
+    final List<dynamic> _connectionRequestList =
+        queryDocumentSnapshot.get(_firestoreFieldConstants.connectionRequest);
+
+    _connectionRequestList.forEach((connectionRequestData) {
+      if (connectionRequestData.values.first.toString() ==
+              OtherConnectionStatus.Invitation_Accepted.toString() ||
+          connectionRequestData.values.first.toString() ==
+              OtherConnectionStatus.Request_Accepted.toString()) {
+        docs.forEach((everyDocument) async {
+          if (everyDocument.id == connectionRequestData.keys.first.toString()) {
+            final String _connectedUserName =
+                everyDocument.get(_firestoreFieldConstants.userName);
+            final String _token =
+                everyDocument.get(_firestoreFieldConstants.token);
+            final String _about =
+                everyDocument.get(_firestoreFieldConstants.about);
+            final String _accCreationDate =
+                everyDocument.get(_firestoreFieldConstants.creationDate);
+            final String _accCreationTime =
+                everyDocument.get(_firestoreFieldConstants.creationTime);
+
+            if (mounted) {
+              setState(() {
+                if (!this._allConnectionsUserName.contains(_connectedUserName))
+                  this._allConnectionsUserName.add(_connectedUserName);
+              });
+            }
+
+            final bool _newConnectionUserNameInserted =
+                await _localDatabase.insertOrUpdateDataForThisAccount(
+                    userName: _connectedUserName,
+                    userMail: everyDocument.id,
+                    userToken: _token,
+                    userAbout: _about,
+                    userAccCreationDate: _accCreationDate,
+                    userAccCreationTime: _accCreationTime);
+
+            if (_newConnectionUserNameInserted) {
+              await _localDatabase.createTableForEveryUser(
+                  userName: _connectedUserName);
+            }
+          }
+        });
+      }
+    });
+
+    if (mounted) {
+      setState(() {
+        this._isLoading = false;
+      });
+    }
+  }
+
+  /// Fetch Real Time Data From Cloud Firestore
+  Future<void> _fetchRealTimeDataFromCloudStorage() async {
+    final realTimeSnapshot =
+        await this._cloudStoreDataManagement.fetchRealTimeDataFromFirestore();
+
+    realTimeSnapshot!.listen((querySnapshot) {
+      querySnapshot.docs.forEach((queryDocumentSnapshot) async {
+        if (queryDocumentSnapshot.id ==
+            FirebaseAuth.instance.currentUser!.email.toString()) {
+          await _checkingForNewConnection(
+              queryDocumentSnapshot, querySnapshot.docs);
+        }
+      });
+    });
+  }
+
+  @override
+  void initState() {
+    _fetchRealTimeDataFromCloudStorage();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: Color.fromARGB(239, 46, 38, 78),
+        backgroundColor: const Color.fromARGB(239, 46, 38, 78),
         floatingActionButton: _externalConnectionManagement(),
         body: LoadingOverlay(
           color: const Color.fromRGBO(0, 0, 0, 0.5),
@@ -96,9 +199,9 @@ class _ChatAndActivityScreenState extends State<ChatAndActivityScreen> {
                   ),
                 ),
               OpenContainer(
-                closedColor: const Color.fromRGBO(34, 48, 60, 1),
-                openColor: const Color.fromRGBO(34, 48, 60, 1),
-                middleColor: const Color.fromRGBO(34, 48, 60, 1),
+                closedColor: const Color.fromARGB(239, 46, 38, 78),
+                openColor: const Color.fromARGB(239, 46, 38, 78),
+                middleColor: const Color.fromARGB(239, 46, 38, 78),
                 closedElevation: 0.0,
                 closedShape: CircleBorder(),
                 transitionDuration: Duration(
@@ -110,7 +213,7 @@ class _ChatAndActivityScreenState extends State<ChatAndActivityScreen> {
                 },
                 closedBuilder: (context, closeWidget) {
                   return CircleAvatar(
-                    backgroundColor: const Color.fromRGBO(34, 48, 60, 1),
+                    backgroundColor: const Color.fromARGB(239, 46, 38, 78),
                     backgroundImage:
                         ExactAssetImage('assets/images/google.png'),
                     radius: MediaQuery.of(context).orientation ==
@@ -164,7 +267,7 @@ class _ChatAndActivityScreenState extends State<ChatAndActivityScreen> {
               top: 7.0,
             ),
             child: Text(
-              'Generation',
+              'Chirpy',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 12.0,
@@ -288,6 +391,7 @@ class _ChatAndActivityScreenState extends State<ChatAndActivityScreen> {
                     return ChatScreen(
                       userName: _userName,
                     );
+                    return LogsCollection();
                   },
                   closedBuilder: (context, closeWidget) {
                     return Container(
@@ -317,7 +421,7 @@ class _ChatAndActivityScreenState extends State<ChatAndActivityScreen> {
                           /// For Extract latest Conversation Message
 //                          _latestDataForConnectionExtractPerfectly(_userName)
                           Text(
-                            'Hello  Rhysha',
+                            'Hello Rhysha',
                             style: TextStyle(color: Colors.white70),
                           ),
                         ],
@@ -340,7 +444,7 @@ class _ChatAndActivityScreenState extends State<ChatAndActivityScreen> {
                         ),
                         Icon(
                           Icons.notifications_active_outlined,
-                          color: Color.fromARGB(255, 175, 76, 140),
+                          color: Colors.green,
                         ),
                       ],
                     ),
@@ -354,7 +458,7 @@ class _ChatAndActivityScreenState extends State<ChatAndActivityScreen> {
 
   Widget _externalConnectionManagement() {
     return OpenContainer(
-      closedColor: Color.fromARGB(255, 200, 20, 119),
+      closedColor: const Color.fromRGBO(20, 200, 50, 1),
       middleColor: const Color.fromRGBO(34, 48, 60, 1),
       openColor: const Color.fromRGBO(34, 48, 60, 1),
       closedShape: CircleBorder(),

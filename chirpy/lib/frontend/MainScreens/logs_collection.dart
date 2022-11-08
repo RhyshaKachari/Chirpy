@@ -26,7 +26,7 @@ class _LogsCollectionState extends State<LogsCollection> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color.fromRGBO(34, 48, 60, 1),
+        backgroundColor: const Color.fromARGB(239, 46, 38, 78),
         body: LoadingOverlay(
           color: const Color.fromRGBO(0, 0, 0, 0.5),
           progressIndicator: const CircularProgressIndicator(
@@ -56,9 +56,9 @@ class _LogsCollectionState extends State<LogsCollection> {
         children: [
           CircleAvatar(
             radius: 30.0,
-            backgroundColor: const Color.fromRGBO(34, 48, 60, 1),
+            backgroundColor: const Color.fromARGB(239, 46, 38, 78),
             backgroundImage: ExactAssetImage('assets/images/google.png'),
-            //getProperImageProviderForConnectionsCollection(
+            // getProperImageProviderForConnectionsCollection(
             //    _userName),
           ),
           Text(

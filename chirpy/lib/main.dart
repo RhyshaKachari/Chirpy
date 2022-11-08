@@ -7,7 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
-import 'Backend/firebase/OnlineDatabaseManagement/new_user_entry.dart';
+import 'Backend/firebase/OnlineDatabaseManagement/cloud_data_management.dart';
 import 'frontend/auth_ui/login.dart';
 
 Future<void> main() async {

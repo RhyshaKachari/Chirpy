@@ -82,7 +82,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             hintText: 'Confirm Password',
                             validator: (String? inputVal) {
                               if (inputVal!.length < 6) {
-                                return 'Confirm Password Must be t least 6 characters';
+                                return 'Confirm Password Must be at least 6 characters';
                                 if (this._pwd.text != this._confirmPwd.text) {
                                   return 'Password and Confirm Not Same Here';
                                 }
